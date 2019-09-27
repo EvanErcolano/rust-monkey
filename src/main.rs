@@ -5,12 +5,12 @@ fn main() {
     println!("Lexer starting up....");
     println!(
         "Input {:?}",
-        fs::read_to_string("int_add.mky")
+        fs::read_to_string("test_file.mky")
             .unwrap()
             .chars()
             .collect::<Vec<char>>()
     );
-    let lexer = Lexer::new(&String::from("int_add.mky")).unwrap();
+    let lexer = Lexer::new(&String::from("test_file.mky")).unwrap();
     for token in lexer {
         println!("{:?}", token);
     }
@@ -64,17 +64,17 @@ impl Iterator for Lexer {
                     Option::Some(Token::Semicolon)
                 }
                 '"' => {
-                    // push ourselves past the first double quote and read until the next one
+                    // The index is at the starting double quote, so we push it forward
+                    // by 1 and read until we find the index of the ending double quote.
                     let ending_quote_index = self.input[next_index + 1..]
                         .char_indices()
                         .find(|&(_, c)| c == '"')
-                        .map(|(i, _)| i + next_index)
+                        .map(|(i, _)| i + next_index + 1)
                         .unwrap();
 
-                    // debug this 
-                    self.start_position = ending_quote_index + 2;
+                    self.start_position = ending_quote_index + 1;
                     Option::Some(Token::Str(
-                        self.input[next_index + 1..=ending_quote_index].to_string(),
+                        self.input[next_index + 1..ending_quote_index].to_string(),
                     ))
                 }
                 _ => {
