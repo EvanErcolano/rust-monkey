@@ -39,6 +39,11 @@ impl Iterator for Lexer {
                     self.start_position = next_index + 1;
                     Option::Some(Token::Semicolon)
                 }
+                '=' => {
+                    self.start_position = next_index + 1;
+                    Option::Some(Token::Assign)
+                }
+
                 '"' => {
                     // The index is at the starting double quote, so we push it forward
                     // by 1 and read until we find the index of the ending double quote.
@@ -60,11 +65,24 @@ impl Iterator for Lexer {
                         .map(|(i, _)| i + next_index)
                         .unwrap_or_else(|| self.input.len());
 
-                    let token = Option::Some(Token::Integer(
-                        self.input[next_index..end_position].parse().unwrap(),
-                    ));
                     self.start_position = end_position;
-                    token
+                    Option::Some(Token::Integer(
+                        self.input[next_index..end_position].parse().unwrap(),
+                    ))
+                }
+                // identifier
+                'a'..='z' | 'A'..='Z' | '_'  => {
+                    let end_position = self.input[next_index..]
+                    .char_indices()
+                    .find(|&(_, c)| !c.is_ascii_alphanumeric())
+                    .map(|(i, _)| i + next_index)
+                    .unwrap_or_else(|| self.input.len());
+
+                    self.start_position = end_position;
+                    match &self.input[next_index..end_position] {
+                        "let" => Option::Some(Token::Let),
+                        identifier => Option::Some(Token::Identifier(identifier.to_string())),
+                    }
                 }
                 _ => {
                     self.start_position = next_index + 1;
@@ -79,21 +97,28 @@ impl Iterator for Lexer {
 
 #[cfg(test)]
 mod test {
-    // do the testing stuff
-    // nothing is in scope by default so we can pull everythign we need
-    // super means modules declarared above this one
-    // use the rest of the stuff in this file?
+    // nothing is in this test scope by default so we pull everything we need
+    // super means modules declarared above this one (the rest of this file? in this case)
     use super::*;
 
     #[test]
-    fn test_() {
-        let input = "
-        1000 + 5;
-        ";
+    fn test_integer_addition() {
+        let input = "    1000 +    5 ;";
         let mut lexer = Lexer::new(input).unwrap();
         assert_eq!(lexer.next().unwrap(), Token::Integer(1000));
         assert_eq!(lexer.next().unwrap(), Token::PlusSign);
         assert_eq!(lexer.next().unwrap(), Token::Integer(5));
+        assert_eq!(lexer.next().unwrap(), Token::Semicolon);
+    }
+
+    #[test]
+    fn test_let_statement() {
+        let input = "let foo = 56;";
+        let mut lexer = Lexer::new(input).unwrap();
+        assert_eq!(lexer.next().unwrap(), Token::Let);
+        assert_eq!(lexer.next().unwrap(), Token::Identifier("foo".to_string()));
+        assert_eq!(lexer.next().unwrap(), Token::Assign);
+        assert_eq!(lexer.next().unwrap(), Token::Integer(56));
         assert_eq!(lexer.next().unwrap(), Token::Semicolon);
     }
 }
