@@ -20,9 +20,6 @@ use lexer::Lexer;
 fn main() {
     println!("Lexer starting up....");
     let lexer = Lexer::new(&String::from("5 + 5")).unwrap();
-    for token in lexer {
-        println!("{:?}", token);
-    }
-    // let p = parser::Parser::new(lexer);
-    // println!("{:?}", p);
+    let p = parser::Parser::new(lexer);
+    println!("{:?}", p);
 }
