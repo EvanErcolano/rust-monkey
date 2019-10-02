@@ -1,8 +1,7 @@
-use std::error::Error;
-use std::fs;
 use crate::token::Token;
+use std::error::Error;
 
-
+#[derive(Debug)]
 pub struct Lexer {
     // str has to be on the  heap
     // &str (str ref) is for if we don't want to own the thing
@@ -12,9 +11,9 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(filename: &str) -> Result<Lexer, Box<dyn Error>> {
+    pub fn new(input: &str) -> Result<Lexer, Box<dyn Error>> {
         Result::Ok(Lexer {
-            input: fs::read_to_string(filename)?,
+            input: input.to_string(),
             start_position: 0,
         })
     }
@@ -54,7 +53,7 @@ impl Iterator for Lexer {
                         self.input[next_index + 1..ending_quote_index].to_string(),
                     ))
                 }
-                _ => {
+                '0'..='9' => {
                     let end_position = self.input[next_index..]
                         .char_indices()
                         .find(|&(_, c)| c.is_whitespace() || !c.is_ascii_digit())
@@ -67,9 +66,34 @@ impl Iterator for Lexer {
                     self.start_position = end_position;
                     token
                 }
+                _ => {
+                    self.start_position = next_index + 1;
+                    Option::Some(Token::Illegal)
+                }
             }
         } else {
             Option::None
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    // do the testing stuff
+    // nothing is in scope by default so we can pull everythign we need
+    // super means modules declarared above this one
+    // use the rest of the stuff in this file?
+    use super::*;
+
+    #[test]
+    fn test_() {
+        let input = "
+        1000 + 5;
+        ";
+        let mut lexer = Lexer::new(input).unwrap();
+        assert_eq!(lexer.next().unwrap(), Token::Integer(1000));
+        assert_eq!(lexer.next().unwrap(), Token::PlusSign);
+        assert_eq!(lexer.next().unwrap(), Token::Integer(5));
+        assert_eq!(lexer.next().unwrap(), Token::Semicolon);
     }
 }

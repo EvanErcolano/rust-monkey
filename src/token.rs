@@ -1,5 +1,5 @@
 // Token name and (if applicable) the char associated with it
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Illegal,
     Integer(isize),
